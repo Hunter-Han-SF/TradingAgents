@@ -1,5 +1,8 @@
+"""Base classes and utilities for LLM clients."""
+
 from abc import ABC, abstractmethod
 from typing import Any, Optional
+import re
 import warnings
 
 
@@ -10,6 +13,9 @@ def normalize_content(response):
     as a list of typed blocks, e.g. [{'type': 'reasoning', ...}, {'type': 'text', 'text': '...'}].
     Downstream agents expect response.content to be a string. This extracts
     and joins the text blocks, discarding reasoning/metadata blocks.
+
+    MiniMax embeds reasoning inside <think>...</think> tags in content;
+    these are stripped to leave only the final answer.
     """
     content = response.content
     if isinstance(content, list):
@@ -19,6 +25,11 @@ def normalize_content(response):
             for item in content
         ]
         response.content = "\n".join(t for t in texts if t)
+
+    # Strip MiniMax reasoning tags from plain string content
+    if isinstance(response.content, str):
+        response.content = re.sub(r"<think>[\s\S]*?</think>", "", response.content)
+
     return response
 
 

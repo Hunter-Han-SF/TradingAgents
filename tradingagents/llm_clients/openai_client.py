@@ -1,4 +1,6 @@
 import os
+import time
+import logging
 from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
@@ -6,9 +8,16 @@ from langchain_openai import ChatOpenAI
 from .base_client import BaseLLMClient, normalize_content
 from .validators import validate_model
 
+logger = logging.getLogger(__name__)
+
+# Retryable HTTP status codes (server overload, rate limit, gateway timeout)
+_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 529}
+_MAX_RETRIES = 6
+_BASE_DELAY = 10  # seconds
+
 
 class NormalizedChatOpenAI(ChatOpenAI):
-    """ChatOpenAI with normalized content output.
+    """ChatOpenAI with normalized content output and automatic retry on server errors.
 
     The Responses API returns content as a list of typed blocks
     (reasoning, text, etc.). This normalizes to string for consistent
@@ -16,7 +25,19 @@ class NormalizedChatOpenAI(ChatOpenAI):
     """
 
     def invoke(self, input, config=None, **kwargs):
-        return normalize_content(super().invoke(input, config, **kwargs))
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                return normalize_content(super().invoke(input, config, **kwargs))
+            except Exception as e:
+                status_code = getattr(e, "status_code", None)
+                if status_code not in _RETRYABLE_STATUS_CODES or attempt == _MAX_RETRIES:
+                    raise
+                delay = _BASE_DELAY * (2 ** attempt)
+                logger.warning(
+                    "LLM request failed (status %s), retrying in %ds (%d/%d): %s",
+                    status_code, delay, attempt + 1, _MAX_RETRIES, e,
+                )
+                time.sleep(delay)
 
 # Kwargs forwarded from user config to ChatOpenAI
 _PASSTHROUGH_KWARGS = (
@@ -32,6 +53,7 @@ _PROVIDER_CONFIG = {
     "glm": ("https://api.z.ai/api/paas/v4/", "ZHIPU_API_KEY"),
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
     "ollama": ("http://localhost:11434/v1", None),
+    "minimax": ("https://api.minimaxi.com/v1", "MINIMAX_API_KEY"),
 }
 
 

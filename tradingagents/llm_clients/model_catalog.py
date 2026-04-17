@@ -99,6 +99,19 @@ MODEL_OPTIONS: ProviderModeOptions = {
             ("Custom model ID", "custom"),
         ],
     },
+    "minimax": {
+        "quick": [
+            ("MiniMax-M2.7 - Frontier reasoning, 204800 ctx", "MiniMax-M2.7"),
+            ("MiniMax-M2.5-highspeed - Fast reasoning, 204800 ctx", "MiniMax-M2.5-highspeed"),
+            ("MiniMax-M2-highspeed - Fast coding & agents, 204800 ctx", "MiniMax-M2-highspeed"),
+        ],
+        "deep": [
+            ("MiniMax-M2.7 - Frontier reasoning, 204800 ctx", "MiniMax-M2.7"),
+            ("MiniMax-M2.5 - Top performance, 204800 ctx", "MiniMax-M2.5"),
+            ("MiniMax-M2.1 - Strong coding, 204800 ctx", "MiniMax-M2.1"),
+            ("MiniMax-M2 - Efficient coding & agents, 204800 ctx", "MiniMax-M2"),
+        ],
+    },
     # OpenRouter: fetched dynamically. Azure: any deployed model name.
     "ollama": {
         "quick": [

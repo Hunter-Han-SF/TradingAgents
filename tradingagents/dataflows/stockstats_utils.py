@@ -13,19 +13,19 @@ logger = logging.getLogger(__name__)
 
 
 def yf_retry(func, max_retries=3, base_delay=2.0):
-    """Execute a yfinance call with exponential backoff on rate limits.
+    """Execute a yfinance call with exponential backoff on failures.
 
-    yfinance raises YFRateLimitError on HTTP 429 responses but does not
-    retry them internally. This wrapper adds retry logic specifically
-    for rate limits. Other exceptions propagate immediately.
+    Retries on rate limits, NoneType errors (Yahoo API instability),
+    and transient connection errors. Other exceptions propagate immediately.
     """
+    _RETRYABLE = (YFRateLimitError, TypeError, ConnectionError, TimeoutError)
     for attempt in range(max_retries + 1):
         try:
             return func()
-        except YFRateLimitError:
+        except _RETRYABLE as e:
             if attempt < max_retries:
                 delay = base_delay * (2 ** attempt)
-                logger.warning(f"Yahoo Finance rate limited, retrying in {delay:.0f}s (attempt {attempt + 1}/{max_retries})")
+                logger.warning(f"yfinance error ({type(e).__name__}: {e}), retrying in {delay:.0f}s (attempt {attempt + 1}/{max_retries})")
                 time.sleep(delay)
             else:
                 raise
