@@ -92,6 +92,8 @@ docker compose run --rm tradingagents
 
 ```bash
 cp .env.example .env
+
+python -m cli.main  
 ```
 
 ### 支持的 LLM 提供商
