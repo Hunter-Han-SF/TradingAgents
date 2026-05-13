@@ -1,4 +1,6 @@
 import os
+import time
+import logging
 from typing import Any, Optional
 
 from langchain_core.messages import AIMessage
@@ -8,6 +10,13 @@ from .api_key_env import get_api_key_env
 from .base_client import BaseLLMClient, normalize_content
 from .capabilities import get_capabilities
 from .validators import validate_model
+
+logger = logging.getLogger(__name__)
+
+# Retryable HTTP status codes (server overload, rate limit, gateway timeout)
+_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 529}
+_MAX_RETRIES = 6
+_BASE_DELAY = 10  # seconds
 
 
 class NormalizedChatOpenAI(ChatOpenAI):
@@ -30,7 +39,19 @@ class NormalizedChatOpenAI(ChatOpenAI):
     """
 
     def invoke(self, input, config=None, **kwargs):
-        return normalize_content(super().invoke(input, config, **kwargs))
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                return normalize_content(super().invoke(input, config, **kwargs))
+            except Exception as e:
+                status_code = getattr(e, "status_code", None)
+                if status_code not in _RETRYABLE_STATUS_CODES or attempt == _MAX_RETRIES:
+                    raise
+                delay = _BASE_DELAY * (2 ** attempt)
+                logger.warning(
+                    "LLM request failed (status %s), retrying in %ds (%d/%d): %s",
+                    status_code, delay, attempt + 1, _MAX_RETRIES, e,
+                )
+                time.sleep(delay)
 
     def with_structured_output(self, schema, *, method=None, **kwargs):
         caps = get_capabilities(self.model_name)

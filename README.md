@@ -253,6 +253,49 @@ ta = TradingAgentsGraph(config=config)
 _, decision = ta.propagate("NVDA", "2026-01-15")
 ```
 
+---
+
+# TradingAgents: 多智能体 LLM 金融交易框架
+
+> 基于 [TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents) 的个人增强版本
+
+## 改进内容
+
+在原版基础上做了以下增强：
+
+- **Docker 国内镜像** — Dockerfile 使用阿里云镜像源和 daocloud 镜像，适配国内网络环境
+- **上游同步** — 已配置 upstream 远程仓库，可随时同步原项目更新
+- **环境变量配置** — 通过 `TRADINGAGENTS_*` 环境变量切换模型/端点，无需改代码
+
+## 支持的 LLM 提供商
+
+| 提供商 | 环境变量 | 说明 |
+|--------|----------|------|
+| OpenAI | `OPENAI_API_KEY` | GPT-5.4/5.5 系列 |
+| Google | `GOOGLE_API_KEY` | Gemini 3.x 系列 |
+| Anthropic | `ANTHROPIC_API_KEY` | Claude 4.x 系列 |
+| xAI | `XAI_API_KEY` | Grok 4.x 系列 |
+| DeepSeek | `DEEPSEEK_API_KEY` | DeepSeek V3/V4 |
+| 通义千问 | `DASHSCOPE_API_KEY` / `DASHSCOPE_CN_API_KEY` | 国际/国内双区域 |
+| 智谱 GLM | `ZHIPU_API_KEY` / `ZHIPU_CN_API_KEY` | Z.AI/BigModel 双区域 |
+| MiniMax | `MINIMAX_API_KEY` / `MINIMAX_CN_API_KEY` | 全球/国内双区域 |
+| OpenRouter | `OPENROUTER_API_KEY` | 多模型路由 |
+| Ollama | 无需 Key | 本地/远程模型 |
+
+## 同步上游更新
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+## 致谢
+
+- 原项目：[TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents)
+- 论文：[TradingAgents: Multi-Agents LLM Financial Trading Framework](https://arxiv.org/abs/2412.20138)
+
 ## Contributing
 
 We welcome contributions from the community! Whether it's fixing a bug, improving documentation, or suggesting a new feature, your input helps make this project better. If you are interested in this line of research, please consider joining our open-source financial AI research community [Tauric Research](https://tauric.ai/).
