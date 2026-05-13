@@ -1,7 +1,4 @@
-import logging
 from typing import Annotated
-
-logger = logging.getLogger(__name__)
 
 # Import from vendor-specific modules
 from .y_finance import (
@@ -27,6 +24,7 @@ from .alpha_vantage import (
 )
 from .alpha_vantage_common import AlphaVantageRateLimitError
 from .finnhub import (
+    FinnhubRateLimitError,
     get_stock as get_finnhub_stock,
     get_indicator as get_finnhub_indicator,
     get_fundamentals as get_finnhub_fundamentals,
@@ -36,7 +34,6 @@ from .finnhub import (
     get_news as get_finnhub_news,
     get_global_news as get_finnhub_global_news,
     get_insider_transactions as get_finnhub_insider_transactions,
-    FinnhubRateLimitError,
 )
 
 # Configuration and routing logic
@@ -182,14 +179,6 @@ def route_to_vendor(method: str, *args, **kwargs):
         try:
             return impl_func(*args, **kwargs)
         except (AlphaVantageRateLimitError, FinnhubRateLimitError):
-            continue  # Known rate limits trigger fallback
-        except Exception as e:
-            # yfinance and other vendor failures trigger fallback
-            vendor_name = VENDOR_LIST[0] if vendor in VENDOR_LIST[1:] else VENDOR_LIST[0]
-            logger.warning(f"Vendor '{vendor}' failed for '{method}': {type(e).__name__}: {e}")
-            continue
+            continue  # Rate limits trigger fallback
 
-    raise RuntimeError(
-        f"All vendors rate-limited for '{method}'. "
-        f"Wait a few minutes and retry, or add API keys for alternative vendors."
-    )
+    raise RuntimeError(f"No available vendor for '{method}'")
