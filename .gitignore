@@ -217,5 +217,10 @@ __marimo__/
 
 # Cache
 **/data_cache/
-/reports
+
+# Enterprise env file (secrets) and generated run reports
+.env.enterprise
+reports/
+
+# Claude Code local settings
 .claude/settings.local.json
